@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import request from "supertest";
-import { app, createAdmin, resetDb } from "./helpers.js";
-
-async function loginToken() {
-  const { username, password } = await createAdmin();
-  const res = await request(app).post("/api/auth/login").send({ username, password });
-  return res.body.token as string;
-}
+import { app, loginAgent, resetDb } from "./helpers.js";
 
 describe("Contact API", () => {
   beforeEach(resetDb);
@@ -32,27 +26,25 @@ describe("Contact API", () => {
   });
 
   it("lets an admin list, mark read, and delete messages", async () => {
-    const token = await loginToken();
+    const agent = await loginAgent();
     const submit = await request(app)
       .post("/api/contact")
       .send({ name: "Jane Doe", email: "jane@example.com", message: "Hello there" });
     const id = submit.body.id as string;
 
-    const list = await request(app).get("/api/contact").set("Authorization", `Bearer ${token}`);
+    const list = await agent.get("/api/contact");
     expect(list.status).toBe(200);
     expect(list.body).toHaveLength(1);
     expect(list.body[0].read).toBe(false);
 
-    const markRead = await request(app)
-      .patch(`/api/contact/${id}/read`)
-      .set("Authorization", `Bearer ${token}`);
+    const markRead = await agent.patch(`/api/contact/${id}/read`);
     expect(markRead.status).toBe(200);
     expect(markRead.body.read).toBe(true);
 
-    const del = await request(app).delete(`/api/contact/${id}`).set("Authorization", `Bearer ${token}`);
+    const del = await agent.delete(`/api/contact/${id}`);
     expect(del.status).toBe(204);
 
-    const listAfter = await request(app).get("/api/contact").set("Authorization", `Bearer ${token}`);
+    const listAfter = await agent.get("/api/contact");
     expect(listAfter.body).toHaveLength(0);
   });
 });

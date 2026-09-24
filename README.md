@@ -7,7 +7,7 @@ Live demo (previous static version) → https://dmfg45.github.io/PortfolioWebsit
 ## Stack
 
 - **Frontend**: React 19 + TypeScript, built with Vite, styled with Tailwind CSS v4, routed with React Router.
-- **Backend**: Node.js + Express (TypeScript), REST API, JWT authentication.
+- **Backend**: Node.js + Express (TypeScript), REST API, JWT-backed httpOnly cookie sessions.
 - **Database**: PostgreSQL, accessed through Prisma ORM.
 - **Admin section**: `/admin` — password-protected dashboard to manage portfolio projects (create/edit/delete, with image upload) and read contact-form submissions, backed by the Postgres database.
 - **Tests & CI**: API integration tests (Vitest + Supertest) and a GitHub Actions workflow that typechecks, tests, and builds both apps on every push/PR.
@@ -78,7 +78,9 @@ The admin dashboard lets you:
 - Add, edit, and delete portfolio projects (title, description, image, link, sort order) — changes appear immediately on the public gallery. Images can be uploaded directly from the form (stored on the server under `server/uploads/`, served at `/uploads/...`) or set by URL.
 - View and manage messages submitted through the public contact form (mark as read, delete).
 
-Authentication is JWT-based: logging in returns a token stored in `localStorage` and sent as a `Bearer` token on admin API requests. All write endpoints (`POST`/`PUT`/`PATCH`/`DELETE` on `/api/projects`, `/api/contact`, and `/api/uploads`, except the public contact submission) require a valid token.
+Authentication uses a JWT stored in an `httpOnly`, `SameSite=Lax` session cookie (not `localStorage`), so the token is never exposed to client-side JavaScript and can't be exfiltrated via XSS. `POST /api/auth/login` sets the cookie, `POST /api/auth/logout` clears it, and `GET /api/auth/me` lets the client check whether a session is active on load. All write endpoints (`POST`/`PUT`/`PATCH`/`DELETE` on `/api/projects`, `/api/contact`, and `/api/uploads`, except the public contact submission) require a valid session cookie.
+
+Set `COOKIE_SECURE=true` in `server/.env` (or the root `.env` for Docker) once the app is served over HTTPS through a TLS-terminating reverse proxy — otherwise leave it `false` for local HTTP development, since browsers silently drop `Secure` cookies sent over plain HTTP.
 
 ## Tests
 

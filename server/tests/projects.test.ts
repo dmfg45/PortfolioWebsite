@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import request from "supertest";
-import { app, createAdmin, resetDb } from "./helpers.js";
-
-async function loginToken() {
-  const { username, password } = await createAdmin();
-  const res = await request(app).post("/api/auth/login").send({ username, password });
-  return res.body.token as string;
-}
+import { app, loginAgent, resetDb } from "./helpers.js";
 
 describe("Projects API", () => {
   beforeEach(resetDb);
@@ -27,20 +21,16 @@ describe("Projects API", () => {
   });
 
   it("rejects creating a project with an invalid body", async () => {
-    const token = await loginToken();
-    const res = await request(app)
-      .post("/api/projects")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ title: "" });
+    const agent = await loginAgent();
+    const res = await agent.post("/api/projects").send({ title: "" });
     expect(res.status).toBe(400);
   });
 
   it("allows an authenticated admin to create, update and delete a project", async () => {
-    const token = await loginToken();
+    const agent = await loginAgent();
 
-    const create = await request(app)
+    const create = await agent
       .post("/api/projects")
-      .set("Authorization", `Bearer ${token}`)
       .send({ title: "Test Project", description: "Desc", imageUrl: "/images/test.png", order: 1 });
     expect(create.status).toBe(201);
     const id = create.body.id as string;
@@ -49,24 +39,21 @@ describe("Projects API", () => {
     expect(listed.body).toHaveLength(1);
     expect(listed.body[0].title).toBe("Test Project");
 
-    const update = await request(app)
-      .put(`/api/projects/${id}`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({ title: "Updated Title" });
+    const update = await agent.put(`/api/projects/${id}`).send({ title: "Updated Title" });
     expect(update.status).toBe(200);
     expect(update.body.title).toBe("Updated Title");
 
-    const del = await request(app).delete(`/api/projects/${id}`).set("Authorization", `Bearer ${token}`);
+    const del = await agent.delete(`/api/projects/${id}`);
     expect(del.status).toBe(204);
 
     const listedAfter = await request(app).get("/api/projects");
     expect(listedAfter.body).toHaveLength(0);
   });
 
-  it("rejects an invalid or expired token", async () => {
+  it("rejects an invalid or forged session cookie", async () => {
     const res = await request(app)
       .post("/api/projects")
-      .set("Authorization", "Bearer not-a-real-token")
+      .set("Cookie", "token=not-a-real-token")
       .send({ title: "Test", description: "Desc", imageUrl: "/images/test.png" });
     expect(res.status).toBe(401);
   });

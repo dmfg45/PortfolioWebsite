@@ -1,32 +1,44 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api } from "../api/client";
-import { clearToken, getToken, setToken } from "../api/client";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
+  isChecking: boolean;
   login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(getToken()));
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    api
+      .get<{ authenticated: true }>("/auth/me")
+      .then(() => setIsAuthenticated(true))
+      .catch(() => setIsAuthenticated(false))
+      .finally(() => setIsChecking(false));
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       isAuthenticated,
+      isChecking,
       async login(username: string, password: string) {
-        const { token } = await api.post<{ token: string }>("/auth/login", { username, password });
-        setToken(token);
+        await api.post("/auth/login", { username, password });
         setIsAuthenticated(true);
       },
-      logout() {
-        clearToken();
-        setIsAuthenticated(false);
+      async logout() {
+        try {
+          await api.post("/auth/logout");
+        } finally {
+          setIsAuthenticated(false);
+        }
       },
     }),
-    [isAuthenticated],
+    [isAuthenticated, isChecking],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

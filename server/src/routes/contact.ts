@@ -12,7 +12,11 @@ const contactSchema = z.object({
   message: z.string().min(1).max(5000),
 });
 
-const submitLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10 });
+const submitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  skip: () => process.env.NODE_ENV === "test",
+});
 
 // Public: submit a contact message
 contactRouter.post("/", submitLimiter, async (req, res) => {

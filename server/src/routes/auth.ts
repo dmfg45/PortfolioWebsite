@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { JWT_SECRET } from "../lib/env.js";
+import { SESSION_COOKIE, SESSION_MAX_AGE_MS, sessionCookieOptions } from "../lib/session.js";
+import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 
 const loginSchema = z.object({
   username: z.string().min(1),
@@ -29,6 +31,16 @@ authRouter.post("/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
-  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: "12h" });
-  res.json({ token });
+  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: SESSION_MAX_AGE_MS / 1000 });
+  res.cookie(SESSION_COOKIE, token, sessionCookieOptions);
+  res.json({ success: true });
+});
+
+authRouter.post("/logout", (_req, res) => {
+  res.clearCookie(SESSION_COOKIE, { ...sessionCookieOptions, maxAge: undefined });
+  res.json({ success: true });
+});
+
+authRouter.get("/me", requireAuth, (_req: AuthedRequest, res) => {
+  res.json({ authenticated: true });
 });

@@ -1,6 +1,7 @@
 import "express-async-errors";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
@@ -29,14 +30,18 @@ export function createApp() {
   if (process.env.NODE_ENV !== "test") {
     app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
   }
-  app.use(cors({ origin: CORS_ORIGIN }));
+  app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
   app.use(express.json({ limit: "100kb" }));
+  app.use(cookieParser());
   app.use("/uploads", express.static(UPLOADS_DIR));
 
-  const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20 });
+  const skipInTests = () => process.env.NODE_ENV === "test";
+  const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, skip: skipInTests });
+  const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, skip: skipInTests });
 
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 
+  app.use("/api", apiLimiter);
   app.use("/api/auth", authLimiter, authRouter);
   app.use("/api/projects", projectsRouter);
   app.use("/api/contact", contactRouter);

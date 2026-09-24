@@ -1,17 +1,4 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
-const TOKEN_KEY = "portfolio_admin_token";
-
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function setToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
-}
-
-export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
-}
 
 export class ApiError extends Error {
   status: number;
@@ -22,16 +9,12 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string> | undefined),
   };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
 
-  const res = await fetch(`${API_BASE}/api${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}/api${path}`, { ...options, headers, credentials: "include" });
 
   if (!res.ok) {
     let message = res.statusText;
@@ -62,16 +45,10 @@ export const api = {
 };
 
 export async function uploadFile(file: File): Promise<{ url: string }> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${API_BASE}/api/uploads`, { method: "POST", headers, body: formData });
+  const res = await fetch(`${API_BASE}/api/uploads`, { method: "POST", body: formData, credentials: "include" });
 
   if (!res.ok) {
     let message = res.statusText;
