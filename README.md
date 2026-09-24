@@ -9,16 +9,18 @@ Live demo (previous static version) → https://dmfg45.github.io/PortfolioWebsit
 - **Frontend**: React 19 + TypeScript, built with Vite, styled with Tailwind CSS v4, routed with React Router.
 - **Backend**: Node.js + Express (TypeScript), REST API, JWT authentication.
 - **Database**: PostgreSQL, accessed through Prisma ORM.
-- **Admin section**: `/admin` — password-protected dashboard to manage portfolio projects (create/edit/delete) and read contact-form submissions, backed by the Postgres database.
+- **Admin section**: `/admin` — password-protected dashboard to manage portfolio projects (create/edit/delete, with image upload) and read contact-form submissions, backed by the Postgres database.
+- **Tests & CI**: API integration tests (Vitest + Supertest) and a GitHub Actions workflow that typechecks, tests, and builds both apps on every push/PR.
 
 The previous version of this site (`index.html`, `assets/`, `pages/*.php`) was a static Bootstrap 3 + jQuery template with a PHP/MySQL contact form containing a SQL-injection vulnerability. It has been fully replaced by the stack above.
 
 ## Project structure
 
 ```
-server/   Express + Prisma API (projects, contact messages, admin auth)
+server/   Express + Prisma API (projects, contact messages, admin auth, uploads)
 client/   React + Vite + Tailwind frontend (public site + admin dashboard)
-docker-compose.yml   Postgres for local development
+docker-compose.yml   Full stack (Postgres + API + frontend) for local/prod-like runs
+.github/workflows/ci.yml   Typecheck, test, and build both apps on push/PR
 ```
 
 ## Prerequisites
@@ -73,12 +75,24 @@ docker-compose.yml   Postgres for local development
 
 The admin dashboard lets you:
 
-- Add, edit, and delete portfolio projects (title, description, image, link, sort order) — changes appear immediately on the public gallery.
+- Add, edit, and delete portfolio projects (title, description, image, link, sort order) — changes appear immediately on the public gallery. Images can be uploaded directly from the form (stored on the server under `server/uploads/`, served at `/uploads/...`) or set by URL.
 - View and manage messages submitted through the public contact form (mark as read, delete).
 
-Authentication is JWT-based: logging in returns a token stored in `localStorage` and sent as a `Bearer` token on admin API requests. All write endpoints (`POST`/`PUT`/`PATCH`/`DELETE` on `/api/projects` and `/api/contact`, except the public contact submission) require a valid token.
+Authentication is JWT-based: logging in returns a token stored in `localStorage` and sent as a `Bearer` token on admin API requests. All write endpoints (`POST`/`PUT`/`PATCH`/`DELETE` on `/api/projects`, `/api/contact`, and `/api/uploads`, except the public contact submission) require a valid token.
 
-## Production build
+## Tests
+
+The API has integration tests (Vitest + Supertest) that run against a real Postgres database (`portfolio_test`), exercising auth, project CRUD, contact messages, and uploads end to end.
+
+```bash
+sudo -u postgres createdb portfolio_test   # once, if it doesn't exist yet
+cd server
+npm test
+```
+
+`npm test` runs `prisma migrate deploy` against `portfolio_test` first, then the test suite. The same steps run in CI (`.github/workflows/ci.yml`) against a Postgres service container, alongside a typecheck and build of both apps.
+
+## Production build (without Docker)
 
 ```bash
 npm run build        # builds the client into client/dist
@@ -86,3 +100,20 @@ cd server && npm run build && npm start   # compiles and runs the API
 ```
 
 Serve `client/dist` behind any static host or reverse proxy, and point it at the deployed API (set `VITE_API_URL` at build time if the API is on a different origin).
+
+## Running the full stack with Docker
+
+`docker-compose.yml` builds and runs Postgres, the API, and the frontend (served by nginx, which proxies `/api` and `/uploads` to the API) together:
+
+```bash
+cp .env.example .env   # set JWT_SECRET and ADMIN_PASSWORD
+docker compose up --build
+```
+
+Then seed the admin user and sample projects once the containers are up:
+
+```bash
+docker compose exec server npm run seed
+```
+
+Visit http://localhost:8080 for the site and http://localhost:8080/admin/login for the admin panel. Uploaded images and Postgres data persist in named Docker volumes across restarts.

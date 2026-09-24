@@ -1,10 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required");
-}
+import { JWT_SECRET } from "../lib/env.js";
 
 export interface AuthedRequest extends Request {
   adminId?: string;

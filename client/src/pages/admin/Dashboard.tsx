@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { api, ApiError } from "../../api/client";
+import { api, ApiError, uploadFile } from "../../api/client";
 import type { ContactMessage, Project } from "../../types";
 
 type Tab = "projects" | "messages";
@@ -50,6 +50,23 @@ function ProjectsPanel() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    try {
+      const { url } = await uploadFile(file);
+      setForm((f) => ({ ...f, imageUrl: url }));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to upload image.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
 
   function load() {
     setLoading(true);
@@ -114,13 +131,24 @@ function ProjectsPanel() {
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40"
         />
-        <input
-          required
-          placeholder="Image URL (e.g. /images/studio.png)"
-          value={form.imageUrl}
-          onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40"
-        />
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            {form.imageUrl && (
+              <img src={form.imageUrl} alt="Preview" className="h-12 w-12 rounded-lg object-cover border border-white/10" />
+            )}
+            <label className="flex-1 cursor-pointer rounded-lg border border-dashed border-white/20 px-3 py-2 text-sm text-white/60 text-center hover:border-accent hover:text-white transition-colors">
+              {uploading ? "Uploading…" : "Upload image"}
+              <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} className="hidden" />
+            </label>
+          </div>
+          <input
+            required
+            placeholder="Image URL (e.g. /images/studio.png)"
+            value={form.imageUrl}
+            onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40"
+          />
+        </div>
         <input
           placeholder="Link (optional)"
           value={form.link}

@@ -60,3 +60,29 @@ export const api = {
     request<T>(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };
+
+export async function uploadFile(file: File): Promise<{ url: string }> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE}/api/uploads`, { method: "POST", headers, body: formData });
+
+  if (!res.ok) {
+    let message = res.statusText;
+    try {
+      const body = await res.json();
+      message = body.error ?? message;
+    } catch {
+      // ignore parse errors
+    }
+    throw new ApiError(res.status, message);
+  }
+
+  return res.json();
+}
