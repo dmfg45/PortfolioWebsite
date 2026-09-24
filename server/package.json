@@ -12,26 +12,31 @@
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
     "pretest": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/portfolio_test?schema=public\" npx prisma migrate deploy",
-    "test": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/portfolio_test?schema=public\" JWT_SECRET=\"test-secret-key-for-vitest\" CORS_ORIGIN=\"http://localhost:5173\" vitest run"
+    "test": "NODE_ENV=test DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/portfolio_test?schema=public\" JWT_SECRET=\"test-secret-key-for-vitest\" CORS_ORIGIN=\"http://localhost:5173\" vitest run"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
     "bcryptjs": "^2.4.3",
+    "compression": "^1.8.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "express-async-errors": "^3.1.1",
     "express-rate-limit": "^7.4.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
     "multer": "^2.4.0",
     "prisma": "^5.20.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/morgan": "^1.9.10",
     "@types/multer": "^2.2.0",
     "@types/node": "^22.7.4",
     "@types/supertest": "^6.0.2",

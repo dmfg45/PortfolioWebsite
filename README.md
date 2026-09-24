@@ -117,3 +117,7 @@ docker compose exec server npm run seed
 ```
 
 Visit http://localhost:8080 for the site and http://localhost:8080/admin/login for the admin panel. Uploaded images and Postgres data persist in named Docker volumes across restarts.
+
+## SEO
+
+`client/index.html` has Open Graph/Twitter meta tags, `client/public/robots.txt`, and `client/public/sitemap.xml`. Once the site has a real domain, update the `og:image`/`twitter:image` tags and the sitemap's `<loc>` to absolute URLs (e.g. `https://your-domain.com/...`) so link previews and search engines resolve them correctly.

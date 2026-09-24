@@ -47,7 +47,10 @@ export function Navbar() {
       </nav>
 
       {open && (
-        <ul className="sm:hidden border-t border-white/10 bg-ink/95 px-6 py-4 space-y-4 text-sm text-white/70">
+        <ul
+          data-testid="mobile-menu"
+          className="sm:hidden border-t border-white/10 bg-ink/95 px-6 py-4 space-y-4 text-sm text-white/70"
+        >
           {links.map((link) => (
             <li key={link.href}>
               <a href={link.href} onClick={() => setOpen(false)} className="block hover:text-white transition-colors">

@@ -23,6 +23,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      NODE_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/portfolio?schema=public
       JWT_SECRET: ${JWT_SECRET:?set a JWT_SECRET in your .env file}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
