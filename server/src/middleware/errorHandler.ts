@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { config } from "../lib/config.js";
 
 // Express recognizes error-handling middleware by its four-argument arity.
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
@@ -6,7 +7,7 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     return res.status(400).json({ error: "Invalid JSON body" });
   }
 
-  if (process.env.NODE_ENV !== "test") {
+  if (config.NODE_ENV !== "test") {
     console.error(err);
   }
 

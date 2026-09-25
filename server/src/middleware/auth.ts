@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../lib/env.js";
+import { config } from "../lib/config.js";
 import { SESSION_COOKIE } from "../lib/session.js";
 
 export interface AuthedRequest extends Request {
@@ -15,7 +15,7 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { sub: string };
+    const payload = jwt.verify(token, config.JWT_SECRET) as { sub: string };
     req.adminId = payload.sub;
     next();
   } catch {

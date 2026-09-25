@@ -2,6 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
+import { config } from "../lib/config.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 
 export const contactRouter = Router();
@@ -15,7 +16,7 @@ const contactSchema = z.object({
 const submitLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
-  skip: () => process.env.NODE_ENV === "test",
+  skip: () => config.NODE_ENV === "test",
 });
 
 // Public: submit a contact message

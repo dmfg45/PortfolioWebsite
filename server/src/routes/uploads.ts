@@ -10,13 +10,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
-const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"]);
+// SVG is intentionally excluded: it can embed <script> and is a stored-XSS
+// vector when served back from the same origin, even for admin-only uploads.
+const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const EXT_BY_TYPE: Record<string, string> = {
   "image/png": ".png",
   "image/jpeg": ".jpg",
   "image/webp": ".webp",
   "image/gif": ".gif",
-  "image/svg+xml": ".svg",
 };
 
 const storage = multer.diskStorage({

@@ -6,19 +6,14 @@ import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
+import { config } from "./lib/config.js";
 import { authRouter } from "./routes/auth.js";
 import { projectsRouter } from "./routes/projects.js";
 import { contactRouter } from "./routes/contact.js";
 import { uploadsRouter, UPLOADS_DIR } from "./routes/uploads.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
-const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:5173";
-
-// Number of reverse-proxy hops in front of the app (e.g. the nginx container
-// in docker-compose) so express-rate-limit and req.ip see the real client IP
-// instead of the proxy's.
-const TRUST_PROXY = process.env.TRUST_PROXY ?? "1";
-const trustProxySetting = /^\d+$/.test(TRUST_PROXY) ? Number(TRUST_PROXY) : TRUST_PROXY;
+const trustProxySetting = /^\d+$/.test(config.TRUST_PROXY) ? Number(config.TRUST_PROXY) : config.TRUST_PROXY;
 
 export function createApp() {
   const app = express();
@@ -27,15 +22,15 @@ export function createApp() {
 
   app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
   app.use(compression());
-  if (process.env.NODE_ENV !== "test") {
-    app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+  if (config.NODE_ENV !== "test") {
+    app.use(morgan(config.NODE_ENV === "production" ? "combined" : "dev"));
   }
-  app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+  app.use(cors({ origin: config.CORS_ORIGIN, credentials: true }));
   app.use(express.json({ limit: "100kb" }));
   app.use(cookieParser());
   app.use("/uploads", express.static(UPLOADS_DIR));
 
-  const skipInTests = () => process.env.NODE_ENV === "test";
+  const skipInTests = () => config.NODE_ENV === "test";
   const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, skip: skipInTests });
   const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, skip: skipInTests });
 
