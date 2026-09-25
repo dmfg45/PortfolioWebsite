@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0b0d17;
+  --color-ink-light: #171a2b;
+  --color-accent: #6d5efc;
+  --color-accent-light: #9c8bff;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background-color: var(--color-ink);
+  color: #e9e9f2;
+}
