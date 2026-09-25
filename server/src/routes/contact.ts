@@ -36,7 +36,7 @@ contactRouter.get("/", requireAuth, async (_req: AuthedRequest, res) => {
 });
 
 // Admin: mark message as read
-contactRouter.patch("/:id/read", requireAuth, async (req: AuthedRequest, res) => {
+contactRouter.patch("/:id/read", requireAuth, async (req: AuthedRequest<{ id: string }>, res) => {
   try {
     const message = await prisma.contactMessage.update({
       where: { id: req.params.id },
@@ -49,7 +49,7 @@ contactRouter.patch("/:id/read", requireAuth, async (req: AuthedRequest, res) =>
 });
 
 // Admin: delete message
-contactRouter.delete("/:id", requireAuth, async (req: AuthedRequest, res) => {
+contactRouter.delete("/:id", requireAuth, async (req: AuthedRequest<{ id: string }>, res) => {
   try {
     await prisma.contactMessage.delete({ where: { id: req.params.id } });
     res.status(204).end();

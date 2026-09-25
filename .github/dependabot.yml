@@ -1,13 +1,17 @@
 version: 2
 updates:
+  # Grouping only minor/patch bumps together keeps those low-risk updates to
+  # one PR, while every major version bump (a framework or compiler jump that
+  # can carry breaking changes, e.g. Express 4->5 or a major TypeScript
+  # release) gets its own separate, individually reviewable PR instead of
+  # being bundled in and risking one broken dependency blocking all the rest.
   - package-ecosystem: npm
     directory: /server
     schedule:
       interval: weekly
     groups:
       server-dependencies:
-        patterns:
-          - "*"
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: npm
     directory: /client
@@ -15,8 +19,7 @@ updates:
       interval: weekly
     groups:
       client-dependencies:
-        patterns:
-          - "*"
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: github-actions
     directory: /

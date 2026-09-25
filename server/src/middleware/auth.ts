@@ -3,11 +3,11 @@ import jwt from "jsonwebtoken";
 import { config } from "../lib/config.js";
 import { SESSION_COOKIE } from "../lib/session.js";
 
-export interface AuthedRequest extends Request {
+export interface AuthedRequest<P = Record<string, string>> extends Request<P> {
   adminId?: string;
 }
 
-export function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
+export function requireAuth<P = Record<string, string>>(req: AuthedRequest<P>, res: Response, next: NextFunction) {
   const token = req.cookies?.[SESSION_COOKIE];
 
   if (!token) {

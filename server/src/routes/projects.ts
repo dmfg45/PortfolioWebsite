@@ -32,7 +32,7 @@ projectsRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
 });
 
 // Admin: update a project
-projectsRouter.put("/:id", requireAuth, async (req: AuthedRequest, res) => {
+projectsRouter.put("/:id", requireAuth, async (req: AuthedRequest<{ id: string }>, res) => {
   const parsed = projectInputSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
@@ -49,7 +49,7 @@ projectsRouter.put("/:id", requireAuth, async (req: AuthedRequest, res) => {
 });
 
 // Admin: delete a project
-projectsRouter.delete("/:id", requireAuth, async (req: AuthedRequest, res) => {
+projectsRouter.delete("/:id", requireAuth, async (req: AuthedRequest<{ id: string }>, res) => {
   try {
     await prisma.project.delete({ where: { id: req.params.id } });
     res.status(204).end();
