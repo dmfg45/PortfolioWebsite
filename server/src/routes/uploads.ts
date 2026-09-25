@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Router } from "express";
 import multer from "multer";
+import sharp from "sharp";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -37,16 +38,53 @@ const upload = multer({
   },
 });
 
+const MAX_WIDTH = 1600;
+
+// Resizes and re-compresses an uploaded image in place so large phone-camera
+// photos don't get served to every visitor at full resolution. GIF is
+// skipped: sharp only reads its first frame, which would silently break
+// animated uploads.
+async function optimizeImage(filePath: string, mimetype: string): Promise<void> {
+  if (mimetype === "image/gif") return;
+
+  const tmpPath = `${filePath}.optimizing`;
+  let pipeline = sharp(filePath)
+    .rotate() // apply EXIF orientation, then strip metadata
+    .resize({ width: MAX_WIDTH, withoutEnlargement: true });
+
+  if (mimetype === "image/jpeg") {
+    pipeline = pipeline.jpeg({ quality: 82, mozjpeg: true });
+  } else if (mimetype === "image/png") {
+    pipeline = pipeline.png({ compressionLevel: 9 });
+  } else if (mimetype === "image/webp") {
+    pipeline = pipeline.webp({ quality: 82 });
+  }
+
+  await pipeline.toFile(tmpPath);
+  await fs.promises.rename(tmpPath, filePath);
+}
+
 export const uploadsRouter = Router();
 
 uploadsRouter.post("/", requireAuth, (req: AuthedRequest, res) => {
-  upload.single("file")(req, res, (err) => {
+  upload.single("file")(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ error: err.message });
     }
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
+
+    const filePath = path.join(UPLOADS_DIR, req.file.filename);
+    try {
+      await optimizeImage(filePath, req.file.mimetype);
+    } catch (optimizeError) {
+      // Serve the original upload rather than failing the request if
+      // optimization errors out for any reason (e.g. a corrupt file).
+      console.error("Image optimization failed:", optimizeError);
+      await fs.promises.rm(`${filePath}.optimizing`, { force: true }).catch(() => {});
+    }
+
     res.status(201).json({ url: `/uploads/${req.file.filename}` });
   });
 });

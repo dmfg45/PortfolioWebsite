@@ -17,3 +17,11 @@ export interface ContactMessage {
   read: boolean;
   createdAt: string;
 }
+
+export interface SiteContent {
+  heroEyebrow: string;
+  heroHeading: string;
+  heroSubheading: string;
+  aboutHeading: string;
+  aboutSubheading: string;
+}

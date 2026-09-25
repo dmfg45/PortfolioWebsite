@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { api, ApiError, uploadFile } from "../../api/client";
-import type { ContactMessage, Project } from "../../types";
+import { DEFAULT_SITE_CONTENT } from "../../lib/defaultSiteContent";
+import type { ContactMessage, Project, SiteContent } from "../../types";
 
-type Tab = "projects" | "messages";
+type Tab = "projects" | "messages" | "content";
 
 export function AdminDashboard() {
   const { logout } = useAuth();
@@ -23,7 +24,7 @@ export function AdminDashboard() {
         </header>
 
         <div className="mb-8 flex gap-2 border-b border-white/10">
-          {(["projects", "messages"] as Tab[]).map((t) => (
+          {(["projects", "messages", "content"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -36,7 +37,9 @@ export function AdminDashboard() {
           ))}
         </div>
 
-        {tab === "projects" ? <ProjectsPanel /> : <MessagesPanel />}
+        {tab === "projects" && <ProjectsPanel />}
+        {tab === "messages" && <MessagesPanel />}
+        {tab === "content" && <ContentPanel />}
       </div>
     </div>
   );
@@ -259,5 +262,87 @@ function MessagesPanel() {
         </div>
       ))}
     </div>
+  );
+}
+
+const contentFields: { key: keyof SiteContent; label: string; multiline?: boolean }[] = [
+  { key: "heroEyebrow", label: "Hero eyebrow" },
+  { key: "heroHeading", label: "Hero heading" },
+  { key: "heroSubheading", label: "Hero subheading", multiline: true },
+  { key: "aboutHeading", label: "About heading" },
+  { key: "aboutSubheading", label: "About subheading", multiline: true },
+];
+
+function ContentPanel() {
+  const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    api
+      .get<SiteContent>("/content")
+      .then(setContent)
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    setSaved(false);
+    try {
+      const updated = await api.put<SiteContent>("/content", content);
+      setContent(updated);
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to save content.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return <p className="text-white/50">Loading…</p>;
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
+      <h2 className="font-display font-semibold text-white">Homepage content</h2>
+      <p className="text-sm text-white/50">
+        Edit the hero and about text shown on the public homepage. Changes appear immediately.
+      </p>
+
+      {contentFields.map((field) => (
+        <label key={field.key} className="block space-y-1">
+          <span className="text-xs uppercase tracking-wide text-white/40">{field.label}</span>
+          {field.multiline ? (
+            <textarea
+              rows={3}
+              value={content[field.key]}
+              onChange={(e) => setContent({ ...content, [field.key]: e.target.value })}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40"
+            />
+          ) : (
+            <input
+              value={content[field.key]}
+              onChange={(e) => setContent({ ...content, [field.key]: e.target.value })}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40"
+            />
+          )}
+        </label>
+      ))}
+
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-light disabled:opacity-60"
+        >
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+        {saved && <span className="text-sm text-emerald-400">Saved.</span>}
+      </div>
+      {error && <p className="text-sm text-red-400">{error}</p>}
+    </form>
   );
 }

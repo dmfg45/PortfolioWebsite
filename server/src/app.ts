@@ -10,6 +10,7 @@ import { config } from "./lib/config.js";
 import { authRouter } from "./routes/auth.js";
 import { projectsRouter } from "./routes/projects.js";
 import { contactRouter } from "./routes/contact.js";
+import { contentRouter } from "./routes/content.js";
 import { uploadsRouter, UPLOADS_DIR } from "./routes/uploads.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -40,6 +41,7 @@ export function createApp() {
   app.use("/api/auth", authLimiter, authRouter);
   app.use("/api/projects", projectsRouter);
   app.use("/api/contact", contactRouter);
+  app.use("/api/content", contentRouter);
   app.use("/api/uploads", uploadsRouter);
 
   app.use((_req, res) => res.status(404).json({ error: "Not found" }));

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { Home } from "./Home";
+import { DEFAULT_SITE_CONTENT } from "../lib/defaultSiteContent";
 import { api, ApiError } from "../api/client";
 import type { Project } from "../types";
 
@@ -15,6 +16,14 @@ vi.mock("../api/client", async (importOriginal) => {
 });
 
 const mockedApi = vi.mocked(api);
+
+function mockGet(projects: Project[]) {
+  mockedApi.get.mockImplementation((path: string) => {
+    if (path === "/projects") return Promise.resolve(projects);
+    if (path === "/content") return Promise.resolve(DEFAULT_SITE_CONTENT);
+    return Promise.reject(new Error(`Unexpected path: ${path}`));
+  });
+}
 
 function renderHome() {
   return render(
@@ -41,20 +50,26 @@ describe("Home", () => {
   });
 
   it("shows the empty state when there are no projects", async () => {
-    mockedApi.get.mockResolvedValueOnce([]);
+    mockGet([]);
     renderHome();
     expect(await screen.findByText(/no projects yet/i)).toBeInTheDocument();
   });
 
   it("renders projects fetched from the API", async () => {
-    mockedApi.get.mockResolvedValueOnce([sampleProject]);
+    mockGet([sampleProject]);
     renderHome();
     expect(await screen.findByText("Sample Project")).toBeInTheDocument();
     expect(screen.getByText("A sample project description")).toBeInTheDocument();
   });
 
+  it("renders site content fetched from the API", async () => {
+    mockGet([]);
+    renderHome();
+    expect(await screen.findByText(DEFAULT_SITE_CONTENT.heroHeading)).toBeInTheDocument();
+  });
+
   it("submits the contact form and shows a success message", async () => {
-    mockedApi.get.mockResolvedValueOnce([]);
+    mockGet([]);
     mockedApi.post.mockResolvedValueOnce({ id: "msg-1" });
     const user = userEvent.setup();
     renderHome();
@@ -75,7 +90,7 @@ describe("Home", () => {
   });
 
   it("shows an error message when contact submission fails", async () => {
-    mockedApi.get.mockResolvedValueOnce([]);
+    mockGet([]);
     mockedApi.post.mockRejectedValueOnce(new ApiError(400, "Invalid email"));
     const user = userEvent.setup();
     renderHome();

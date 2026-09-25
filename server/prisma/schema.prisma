@@ -33,3 +33,11 @@ model ContactMessage {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+// Simple key/value store for editable public-site copy (hero, about text)
+// so the site owner can update it from the admin panel without a redeploy.
+model SiteContent {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

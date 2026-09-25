@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { api, ApiError } from "../api/client";
-import type { Project } from "../types";
+import { DEFAULT_SITE_CONTENT } from "../lib/defaultSiteContent";
+import type { Project, SiteContent } from "../types";
 
 const skills = [
   { title: "Product Engineering", copy: "Building full-stack applications end to end, from database schema to polished UI." },
@@ -14,6 +15,7 @@ const skills = [
 export function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
 
   useEffect(() => {
     api
@@ -21,13 +23,18 @@ export function Home() {
       .then(setProjects)
       .catch(() => setProjects([]))
       .finally(() => setLoading(false));
+
+    api
+      .get<SiteContent>("/content")
+      .then(setContent)
+      .catch(() => setContent(DEFAULT_SITE_CONTENT));
   }, []);
 
   return (
     <div className="min-h-screen">
       <Navbar />
-      <Hero />
-      <About />
+      <Hero content={content} />
+      <About content={content} />
       <Gallery projects={projects} loading={loading} />
       <Contact />
       <Footer />
@@ -35,17 +42,13 @@ export function Home() {
   );
 }
 
-function Hero() {
+function Hero({ content }: { content: SiteContent }) {
   return (
     <section id="hero" className="relative pt-40 pb-28 px-6">
       <div className="mx-auto max-w-4xl text-center">
-        <p className="text-accent-light font-medium tracking-wide uppercase text-sm mb-4">Software Engineer &amp; Creator</p>
-        <h1 className="font-display text-4xl sm:text-6xl font-bold text-white leading-tight">
-          Hi, I&apos;m André Graça
-        </h1>
-        <p className="mt-6 text-lg text-white/70 max-w-2xl mx-auto">
-          I design and build modern web applications, and share my work in photography and video along the way.
-        </p>
+        <p className="text-accent-light font-medium tracking-wide uppercase text-sm mb-4">{content.heroEyebrow}</p>
+        <h1 className="font-display text-4xl sm:text-6xl font-bold text-white leading-tight">{content.heroHeading}</h1>
+        <p className="mt-6 text-lg text-white/70 max-w-2xl mx-auto">{content.heroSubheading}</p>
         <div className="mt-10 flex justify-center gap-4">
           <a
             href="#work"
@@ -65,15 +68,13 @@ function Hero() {
   );
 }
 
-function About() {
+function About({ content }: { content: SiteContent }) {
   return (
     <section id="about" className="px-6 py-24 bg-ink-light">
       <div className="mx-auto max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="font-display text-3xl font-bold text-white">What I do</h2>
-          <p className="mt-3 text-white/60 max-w-xl mx-auto">
-            A mix of engineering and creative work, always focused on shipping something real.
-          </p>
+          <h2 className="font-display text-3xl font-bold text-white">{content.aboutHeading}</h2>
+          <p className="mt-3 text-white/60 max-w-xl mx-auto">{content.aboutSubheading}</p>
         </div>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {skills.map((skill) => (

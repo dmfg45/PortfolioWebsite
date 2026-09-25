@@ -42,4 +42,18 @@ describe("Navbar", () => {
 
     expect(screen.queryByTestId("mobile-menu")).not.toBeInTheDocument();
   });
+
+  it("closes the mobile menu on Escape and returns focus to the toggle button", async () => {
+    const user = userEvent.setup();
+    renderNavbar();
+
+    const toggle = screen.getByRole("button", { name: "Open menu" });
+    await user.click(toggle);
+    expect(screen.getByTestId("mobile-menu")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByTestId("mobile-menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
+  });
 });

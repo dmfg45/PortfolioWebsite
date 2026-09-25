@@ -8,6 +8,7 @@ export const app = createApp();
 export async function resetDb() {
   await prisma.contactMessage.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.siteContent.deleteMany();
   await prisma.adminUser.deleteMany();
 }
 

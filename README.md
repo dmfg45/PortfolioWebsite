@@ -75,7 +75,8 @@ docker-compose.yml   Full stack (Postgres + API + frontend) for local/prod-like 
 
 The admin dashboard lets you:
 
-- Add, edit, and delete portfolio projects (title, description, image, link, sort order) — changes appear immediately on the public gallery. Images can be uploaded directly from the form (stored on the server under `server/uploads/`, served at `/uploads/...`) or set by URL.
+- Add, edit, and delete portfolio projects (title, description, image, link, sort order) — changes appear immediately on the public gallery. Images can be uploaded directly from the form (stored on the server under `server/uploads/`, served at `/uploads/...`) or set by URL. Uploaded images are automatically resized (max 1600px wide) and re-compressed with `sharp` so large phone-camera photos aren't served at full size.
+- Edit the homepage's hero and about copy (heading, subheading, eyebrow text) from the **Content** tab — no redeploy needed. Falls back to sensible defaults for any field that hasn't been customized.
 - View and manage messages submitted through the public contact form (mark as read, delete).
 
 Authentication uses a JWT stored in an `httpOnly`, `SameSite=Lax` session cookie (not `localStorage`), so the token is never exposed to client-side JavaScript and can't be exfiltrated via XSS. `POST /api/auth/login` sets the cookie, `POST /api/auth/logout` clears it, and `GET /api/auth/me` lets the client check whether a session is active on load. All write endpoints (`POST`/`PUT`/`PATCH`/`DELETE` on `/api/projects`, `/api/contact`, and `/api/uploads`, except the public contact submission) require a valid session cookie.
