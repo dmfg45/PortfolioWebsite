@@ -9,7 +9,7 @@ const projectInputSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   imageUrl: z.string().min(1),
-  link: z.string().url().optional().or(z.literal("")),
+  link: z.url().optional().or(z.literal("")),
   order: z.number().int().optional(),
 });
 
